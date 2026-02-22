@@ -11,6 +11,8 @@ This is a mod that causes many entities to explode on impact with the player, an
 * `Explosion Immunity` - set true by default. This will make players immune to the explosions they cause (as well as all other exploding things - landmines, missiles, etc...). Turning this off will make for a much harder experience!
 * `Sapsucker explodes` - set false by default. Prevents a bug where stamina drains instantly after the Giant Sapsucker explodes... But also prevents the Giant Sapsucker from exploding. Your call which is worse. (If you turn this on, rejoining the lobby will fix the bug)
 
+Make sure your config settings are all the same as your crew for the best experience!
+
 ## Features
 
 Spoilers ahead!
