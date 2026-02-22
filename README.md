@@ -41,6 +41,6 @@ Brackens, Masked, Forest Keepers, and Tulip Snakes
 * cookiecaker (me) - Programming, thumbnail, video editing
 * [ButteryStancakes](https://thunderstore.io/c/lethal-company/p/ButteryStancakes/) - `Init()`, `Create()`, and `OnNetworkSpawn()` for the networker and helping me understand networking as a whole
 * [IAmBatby](https://thunderstore.io/c/lethal-company/p/IAmBatby/) - `Add()` for ILExtensions and help with fixing bugs
-* [pacoito](https://thunderstore.io/c/lethal-company/p/pacoito/), [Hamunii](https://thunderstore.io/c/lethal-company/p/Hamunii/), [mborsh](https://thunderstore.io/c/lethal-company/p/mborsh/), [XuXiaolan](https://thunderstore.io/c/lethal-company/p/XuXiaolan/) - Lots of help with fixing bugs and using IL code and being very patient with me
+* [pacoito](https://thunderstore.io/c/lethal-company/p/pacoito/), [Hamunii](https://thunderstore.io/c/lethal-company/p/Hamunii/), [mborsh](https://thunderstore.io/c/lethal-company/p/mborsh/), [XuXiaolan](https://thunderstore.io/c/lethal-company/p/XuXiaolan/) - Lots of help with fixing bugs, helping me understand IL code and being very patient with me
 * flintchips - Making the song "Xarnip" in the intro video
 * Neve, Ame, Thia, Limbo, Tood, and Unna - Testing and filming
