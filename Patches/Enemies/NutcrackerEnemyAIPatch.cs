@@ -50,12 +50,17 @@ namespace volatileEmployees.Patches.Enemies
 
             MethodInfo getNetObj = typeof(Unity.Netcode.NetworkBehaviour).GetProperty(nameof(Unity.Netcode.NetworkBehaviour.NetworkObject)).GetMethod;
             MethodInfo spawnExplosion = typeof(VENetworker).GetMethod(nameof(VENetworker.SpawnExplosionEnemy));
-
+            MethodInfo despawnEnemy = typeof(VENetworker).GetMethod(nameof(VENetworker.DespawnEnemy));
+            
             newCodes.AddRange(beforeDamage);
 
-            newCodes.Add(OpCodes.Ldarg_0);                  // NutcrackerEnemy
+            newCodes.Add(OpCodes.Ldarg_0);                  // Nutcracker
             newCodes.Add(OpCodes.Call, getNetObj);
             newCodes.Add(OpCodes.Callvirt, spawnExplosion);
+
+            newCodes.Add(OpCodes.Ldarg_0);                  // Nutcracker
+            newCodes.Add(OpCodes.Call, getNetObj);
+            newCodes.Add(OpCodes.Call, despawnEnemy);
 
             newCodes.AddRange(afterDamage);
 
@@ -64,3 +69,4 @@ namespace volatileEmployees.Patches.Enemies
         }
     }
 }
+
