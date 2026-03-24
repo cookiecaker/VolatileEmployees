@@ -12,12 +12,14 @@ namespace volatileEmployees.Patches.Enemies
     {
         private static string name = "CaveDwellerAI";
 
-        private static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
+        private static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator il)
         {
             List<CodeInstruction> codes = new List<CodeInstruction>(instructions);
             int startIndex = -1;
             int endIndex = -1;
             int brfalse = 0;
+            Label falseConfig = il.DefineLabel();
+            Label trueConfig = il.DefineLabel();
 
             for (int i = 0; i < codes.Count; i++)
             {
@@ -26,7 +28,9 @@ namespace volatileEmployees.Patches.Enemies
                     brfalse++;
                     if (brfalse == 5)
                     {
-                        startIndex = i + 2;
+                        startIndex = i + 1;
+                        codes[startIndex].labels.Add(falseConfig);
+
                         Plugin.mls.LogDebug($"{name} startIndex: {startIndex}");
 
                         for (int j = startIndex; j < codes.Count; j++)
@@ -35,6 +39,8 @@ namespace volatileEmployees.Patches.Enemies
                             if (codes[j].opcode.Equals(OpCodes.Callvirt))
                             {
                                 endIndex = j;
+                                codes[endIndex + 1].labels.Add(trueConfig);
+
                                 Plugin.mls.LogDebug($"{name} endIndex: {endIndex}");
                                 break;
                             }
@@ -45,27 +51,20 @@ namespace volatileEmployees.Patches.Enemies
             }
             if (startIndex != -1 && endIndex != -1)
             {
-                codes.RemoveRange(startIndex, endIndex - startIndex + 1);
+                MethodInfo getConfig = typeof(Plugin).GetMethod(nameof(Plugin.GetEnemiesExplode));
+                MethodInfo getNetObj = typeof(Unity.Netcode.NetworkBehaviour).GetProperty(nameof(Unity.Netcode.NetworkBehaviour.NetworkObject)).GetMethod;
+                MethodInfo spawnExplosion5x = typeof(VENetworker).GetMethod(nameof(VENetworker.SpawnExplosion5x));
+
+                codes.Insert(startIndex, OpCodes.Br, trueConfig);
+                codes.Insert(startIndex, OpCodes.Call, spawnExplosion5x);
+                codes.Insert(startIndex, OpCodes.Call, getNetObj);
+                codes.Insert(startIndex, OpCodes.Ldarg_0);
+                codes.Insert(startIndex, OpCodes.Brfalse, falseConfig);
+                codes.Insert(startIndex, OpCodes.Call, getConfig);
+
+                Plugin.mls.LogDebug($"Successfully patched {name}!");
             }
-
-            // lists of code instructions - splice to add explosion code
-            List<CodeInstruction> beforeDamage = codes.GetRange(0, startIndex - 1);
-            List<CodeInstruction> afterDamage = codes.GetRange(startIndex, codes.Count - startIndex);
-            List<CodeInstruction> newCodes = new List<CodeInstruction>();
-
-            MethodInfo getNetObj = typeof(Unity.Netcode.NetworkBehaviour).GetProperty(nameof(Unity.Netcode.NetworkBehaviour.NetworkObject)).GetMethod;
-            MethodInfo spawnExplosion5x = typeof(VENetworker).GetMethod(nameof(VENetworker.SpawnExplosion5x));
-
-            newCodes.AddRange(beforeDamage);
-
-            newCodes.Add(OpCodes.Ldarg_0);                  // CaveDweller
-            newCodes.Add(OpCodes.Call, getNetObj);
-            newCodes.Add(OpCodes.Callvirt, spawnExplosion5x);
-
-            newCodes.AddRange(afterDamage);
-
-            Plugin.mls.LogDebug($"Successfully patched {name}!");
-            return newCodes.AsEnumerable();
+            return codes.AsEnumerable();
         }
     }
 }

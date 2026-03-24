@@ -13,12 +13,14 @@ namespace volatileEmployees.Patches.Enemies
     {
         private static string name = "GiantKiwiAI";
 
-        private static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
+        private static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator il)
         {
             List<CodeInstruction> codes = new List<CodeInstruction>(instructions);
             int startIndex = -1;
             int endIndex = -1;
             int stfld = 0;
+            Label falseConfig = il.DefineLabel();
+            Label trueConfig = il.DefineLabel();
 
             for (int i = 0; i < codes.Count; i++)
             {
@@ -27,7 +29,9 @@ namespace volatileEmployees.Patches.Enemies
                     stfld++;
                     if (stfld == 3)
                     {
-                        startIndex = i + 2;
+                        startIndex = i + 1;
+                        codes[startIndex].labels.Add(falseConfig);
+
                         Plugin.mls.LogDebug($"{name} startIndex: {startIndex}");
 
                         for (int j = startIndex; j < codes.Count; j++)
@@ -36,6 +40,8 @@ namespace volatileEmployees.Patches.Enemies
                             if (codes[j].opcode.Equals(OpCodes.Callvirt))
                             {
                                 endIndex = j + 1;
+                                codes[endIndex + 1].labels.Add(trueConfig);
+
                                 Plugin.mls.LogDebug($"{name} endIndex: {endIndex}");
                                 break;
                             }
@@ -47,27 +53,24 @@ namespace volatileEmployees.Patches.Enemies
             }
             if (startIndex != -1 && endIndex != -1)
             {
-                codes.RemoveRange(startIndex, endIndex - startIndex + 1);
+                MethodInfo getConfig = typeof(Plugin).GetMethod(nameof(Plugin.GetPatchGiantKiwi));
+                MethodInfo getNetObj = typeof(Unity.Netcode.NetworkBehaviour).GetProperty(nameof(Unity.Netcode.NetworkBehaviour.NetworkObject)).GetMethod;
+                MethodInfo spawnExplosion = typeof(VENetworker).GetMethod(nameof(VENetworker.SpawnExplosionEnemy));
+                MethodInfo despawnEnemy = typeof(VENetworker).GetMethod(nameof(VENetworker.DespawnEnemy));
+
+                codes.Insert(startIndex, OpCodes.Br, trueConfig);
+                codes.Insert(startIndex, OpCodes.Call, despawnEnemy);
+                codes.Insert(startIndex, OpCodes.Call, getNetObj);
+                codes.Insert(startIndex, OpCodes.Ldarg_0);
+                codes.Insert(startIndex, OpCodes.Call, spawnExplosion);
+                codes.Insert(startIndex, OpCodes.Call, getNetObj);
+                codes.Insert(startIndex, OpCodes.Ldarg_0);
+                codes.Insert(startIndex, OpCodes.Brfalse, falseConfig);
+                codes.Insert(startIndex, OpCodes.Call, getConfig);
+
+                Plugin.mls.LogDebug($"Successfully patched {name}!");
             }
-
-            // lists of code instructions - splice to add explosion code
-            List<CodeInstruction> beforeDamage = codes.GetRange(0, startIndex - 1);
-            List<CodeInstruction> afterDamage = codes.GetRange(startIndex, codes.Count - startIndex);
-            List<CodeInstruction> newCodes = new List<CodeInstruction>();
-
-            MethodInfo getNetObj = typeof(Unity.Netcode.NetworkBehaviour).GetProperty(nameof(Unity.Netcode.NetworkBehaviour.NetworkObject)).GetMethod;
-            MethodInfo spawnExplosion = typeof(VENetworker).GetMethod(nameof(VENetworker.SpawnExplosionEnemy));
-
-            newCodes.AddRange(beforeDamage);
-
-            newCodes.Add(OpCodes.Ldarg_0);                  // GiantKiwi
-            newCodes.Add(OpCodes.Call, getNetObj);
-            newCodes.Add(OpCodes.Callvirt, spawnExplosion);
-
-            newCodes.AddRange(afterDamage);
-
-            Plugin.mls.LogDebug($"Successfully patched {name}!");
-            return newCodes.AsEnumerable();
+            return codes.AsEnumerable();
         }
     }
 }

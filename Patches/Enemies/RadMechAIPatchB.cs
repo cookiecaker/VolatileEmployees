@@ -11,12 +11,14 @@ namespace volatileEmployees.Patches.Enemies
     class RadMechAIPatchB
     {
         private static string name = "RadMechAI.BeginTorchPlayer";
-        private static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
+        private static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator il)
         {
             List<CodeInstruction> codes = new List<CodeInstruction>(instructions);
             int startIndex = -1;
             int endIndex = -1;
             int ldfld = 0;
+            Label falseConfig = il.DefineLabel();
+            Label trueConfig = il.DefineLabel();
 
             for (int i = 0; i < codes.Count; i++)
             {
@@ -25,7 +27,9 @@ namespace volatileEmployees.Patches.Enemies
                     ldfld++;
                     if (ldfld == 13)
                     {
-                        startIndex = i + 3;
+                        startIndex = i + 2;
+                        codes[startIndex].labels.Add(falseConfig);
+
                         Plugin.mls.LogDebug($"{name} startIndex: {startIndex}");
 
                         for (int j = startIndex; j < codes.Count; j++)
@@ -34,6 +38,8 @@ namespace volatileEmployees.Patches.Enemies
                             if (codes[j].opcode.Equals(OpCodes.Stfld))
                             {
                                 endIndex = j;
+                                codes[endIndex + 1].labels.Add(trueConfig);
+
                                 Plugin.mls.LogDebug($"{name} endIndex: {endIndex}");
                                 break;
                             }
@@ -44,35 +50,24 @@ namespace volatileEmployees.Patches.Enemies
             }
             if (startIndex != -1 && endIndex != -1)
             {
-                for (int i = startIndex - 1; i <= endIndex; i++)
-                {
-                    codes[i].opcode = OpCodes.Nop;
-                }
+                MethodInfo getConfig = typeof(Plugin).GetMethod(nameof(Plugin.GetEnemiesExplode));
+                MethodInfo getNetObj = typeof(Unity.Netcode.NetworkBehaviour).GetProperty(nameof(Unity.Netcode.NetworkBehaviour.NetworkObject)).GetMethod;
+                MethodInfo spawnExplosion = typeof(VENetworker).GetMethod(nameof(VENetworker.SpawnExplosionEnemy));
+                MethodInfo despawnEnemy = typeof(VENetworker).GetMethod(nameof(VENetworker.DespawnEnemy));
+
+                codes.Insert(startIndex, OpCodes.Br, trueConfig);
+                codes.Insert(startIndex, OpCodes.Call, despawnEnemy);
+                codes.Insert(startIndex, OpCodes.Call, getNetObj);
+                codes.Insert(startIndex, OpCodes.Ldarg_0);
+                codes.Insert(startIndex, OpCodes.Call, spawnExplosion);
+                codes.Insert(startIndex, OpCodes.Call, getNetObj);
+                codes.Insert(startIndex, OpCodes.Ldarg_0);
+                codes.Insert(startIndex, OpCodes.Brfalse, falseConfig);
+                codes.Insert(startIndex, OpCodes.Call, getConfig);
+
+                Plugin.mls.LogDebug($"Successfully patched {name}!");
             }
-
-            // lists of code instructions - splice to add explosion code
-            List<CodeInstruction> beforeDamage = codes.GetRange(0, endIndex - 1); 
-            List<CodeInstruction> afterDamage = codes.GetRange(endIndex, codes.Count - endIndex);
-            List<CodeInstruction> newCodes = new List<CodeInstruction>();
-
-            MethodInfo getNetObj = typeof(Unity.Netcode.NetworkBehaviour).GetProperty(nameof(Unity.Netcode.NetworkBehaviour.NetworkObject)).GetMethod;
-            MethodInfo spawnExplosion = typeof(VENetworker).GetMethod(nameof(VENetworker.SpawnExplosionEnemy));
-            MethodInfo despawnEnemy = typeof(VENetworker).GetMethod(nameof(VENetworker.DespawnEnemy));
-
-            newCodes.AddRange(beforeDamage);
-
-            newCodes.Add(OpCodes.Ldarg_0);                  // RadMech
-            newCodes.Add(OpCodes.Call, getNetObj);
-            newCodes.Add(OpCodes.Callvirt, spawnExplosion);
-
-            newCodes.Add(OpCodes.Ldarg_0);                  // RadMech
-            newCodes.Add(OpCodes.Call, getNetObj);
-            newCodes.Add(OpCodes.Call, despawnEnemy);
-
-            newCodes.AddRange(afterDamage);
-
-            Plugin.mls.LogDebug($"Successfully patched {name}!");
-            return newCodes.AsEnumerable();
+            return codes.AsEnumerable();
         }
     }
 }

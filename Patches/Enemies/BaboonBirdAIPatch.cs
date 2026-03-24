@@ -11,30 +11,42 @@ namespace volatileEmployees.Patches.Enemies
     internal class BaboonBirdAIPatch
     {
         private static string name = "BaboonBirdAI";
-        private static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
+        private static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator il)
         {
 
             /* 
-             * - find stfld (where timeSinceHitting is set) and set to startIndex (+1)
-             * - after that, find brfalse.s (right after where isPlayerDead is checked) and set to endIndex (-3)
-             * - remove startIndex - endIndex
+             * - find Stfld (where DamagePlayer begins), set startIndex (+1 from i) and add falseConfig label
+             * - find Callvirt (DamagePlayer is called), set endIndex (+1 from j)
+             * - insert ilcode:
+                 * 1. load config from plugin (GetMethod)
+                 * 2. check - if false, transfer to falseConfig
+                 * 3. load SpawnExplosion stuff
+                 * 4. transfer to trueConfig
+             * - add trueConfig label to (endIndex + 1)
 
-             * - separate list into beforeDamage (0 - (startIndex - 1)) and afterDamage (startIndex - list length)
-             * - create list of CodeInstruction for new code
-             * - add newCode to end of beforeDamage
-             * - add afterDamage back to beforeDamage -> newInstructions
-             * - return newInstructions as enumerable
+             * final IL should be something like this:
+             * 1. load config from plugin 
+             * 2. check - if false, transfer to (falseConfig)
+             * 3. load SpawnExplosion stuff
+             * 4. transfer to (trueConfig)
+             * 5. (falseConfig) load DamagePlayer stuff
+             * 6. (trueConfig) check for isPlayerDead
              */
+
             List<CodeInstruction> codes = new List<CodeInstruction>(instructions);
             int startIndex = -1;
             int endIndex = -1;
+            Label falseConfig = il.DefineLabel();
+            Label trueConfig = il.DefineLabel();
 
             for (int i = 0; i < codes.Count; i++)
             {
                 if (codes[i].opcode.Equals(OpCodes.Stfld))
                 {
-                    startIndex = i + 2;
-                    Plugin.mls.LogDebug($"{name} startIndex: {startIndex}");
+                    startIndex = i + 1;
+                    codes[startIndex].labels.Add(falseConfig);
+
+                    Plugin.mls.LogInfo($"{name} startIndex: {startIndex}");
 
                     for (int j = startIndex; j < codes.Count; j++)
                     {
@@ -42,7 +54,9 @@ namespace volatileEmployees.Patches.Enemies
                         if (codes[j].opcode.Equals(OpCodes.Callvirt))
                         {
                             endIndex = j;
-                            Plugin.mls.LogDebug($"{name} endIndex: {endIndex}");
+                            codes[endIndex + 1].labels.Add(trueConfig);
+
+                            Plugin.mls.LogInfo($"{name} endIndex: {endIndex}");
                             break;
                         }
                     }
@@ -51,27 +65,21 @@ namespace volatileEmployees.Patches.Enemies
             }
             if (startIndex != -1 && endIndex != -1)
             {
-                codes.RemoveRange(startIndex, endIndex - startIndex + 1);
+                MethodInfo getConfig = typeof(Plugin).GetMethod(nameof(Plugin.GetEnemiesExplode));
+                MethodInfo getNetObj = typeof(Unity.Netcode.NetworkBehaviour).GetProperty(nameof(Unity.Netcode.NetworkBehaviour.NetworkObject)).GetMethod;
+                MethodInfo spawnExplosion = typeof(VENetworker).GetMethod(nameof(VENetworker.SpawnExplosionEnemy));
+
+                codes.Insert(startIndex, OpCodes.Br, trueConfig);
+                codes.Insert(startIndex, OpCodes.Call, spawnExplosion);
+                codes.Insert(startIndex, OpCodes.Call, getNetObj);
+                codes.Insert(startIndex, OpCodes.Ldarg_0);
+                codes.Insert(startIndex, OpCodes.Brfalse, falseConfig);
+                codes.Insert(startIndex, OpCodes.Call, getConfig);
+
+                Plugin.mls.LogDebug($"Successfully patched {name}!");
             }
 
-            // lists of code instructions - splice to add explosion code
-            List<CodeInstruction> beforeDamage = codes.GetRange(0, startIndex - 1);
-            List<CodeInstruction> afterDamage = codes.GetRange(startIndex, codes.Count - startIndex);
-            List<CodeInstruction> newCodes = new List<CodeInstruction>();
-
-            MethodInfo getNetObj = typeof(Unity.Netcode.NetworkBehaviour).GetProperty(nameof(Unity.Netcode.NetworkBehaviour.NetworkObject)).GetMethod;
-            MethodInfo spawnExplosion = typeof(VENetworker).GetMethod(nameof(VENetworker.SpawnExplosionEnemy));
-
-            newCodes.AddRange(beforeDamage);
-
-            newCodes.Add(OpCodes.Ldarg_0);                  // BaboonBird
-            newCodes.Add(OpCodes.Call, getNetObj);
-            newCodes.Add(OpCodes.Callvirt, spawnExplosion);
-
-            newCodes.AddRange(afterDamage);
-
-            Plugin.mls.LogDebug($"Successfully patched {name}!");
-            return newCodes.AsEnumerable();
+            return codes.AsEnumerable();
         }
     }
 }

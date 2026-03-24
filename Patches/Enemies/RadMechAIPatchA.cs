@@ -11,135 +11,52 @@ namespace volatileEmployees.Patches.Enemies
     class RadMechAIPatchA // stomp
     {
         private static string name = "RadMechAI.Stomp";
-        private static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
+        private static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator il)
         {
-            // assign nop normally
+            /* 
+             * - after (if num < radius) check, add check for config
+             * - if false, transfer to check for (if (double)num < (double)radius * 0.175)
+             * - if true, continue with explosion spawning & deleting
+                * - transfer to last codeinstruction (ret)
+             */
 
             List<CodeInstruction> codes = new List<CodeInstruction>(instructions);
-            int startIndexA = -1;
-            int endIndexA = -1;
-            int startIndexB = -1;
-            int endIndexB = -1;
+            int startIndex = -1;
+            Label falseConfig = il.DefineLabel();
+            Label trueConfig = il.DefineLabel();
+
+            codes[codes.Count - 1].labels.Add(trueConfig);
 
             for (int i = 0; i < codes.Count; i++)
             {
-                if (codes[i].opcode.Equals(OpCodes.Mul))
+                if (codes[i].opcode.Equals(OpCodes.Conv_R8))
                 {
-                    startIndexA = i + 3;
-                    Plugin.mls.LogDebug($"{name}#1 startIndex: {startIndexA}");
+                    startIndex = i - 1;
+                    codes[startIndex].labels.Add(falseConfig);
 
-                    for (int j = startIndexA; j < codes.Count; j++)
-                    {
-
-                        if (codes[j].opcode.Equals(OpCodes.Callvirt))
-                        {
-                            endIndexA = j;
-                            Plugin.mls.LogDebug($"{name}#1 endIndex: {endIndexA}");
-                            break;
-                        }
-                    }
+                    Plugin.mls.LogDebug($"{name} startIndex: {startIndex}");
                     break;
                 }
             }
 
-            for (int i = startIndexA; i < codes.Count; i++)
+            if (startIndex != -1)
             {
-                if (codes[i].opcode.Equals(OpCodes.Mul))
-                {
-                    startIndexB = i + 3;
-                    Plugin.mls.LogDebug($"{name}#2 startIndex: {startIndexB}");
+                MethodInfo getConfig = typeof(Plugin).GetMethod(nameof(Plugin.GetEnemiesExplode));
+                MethodInfo getNetObj = typeof(Unity.Netcode.NetworkBehaviour).GetProperty(nameof(Unity.Netcode.NetworkBehaviour.NetworkObject)).GetMethod;
+                MethodInfo spawnExplosion = typeof(VENetworker).GetMethod(nameof(VENetworker.SpawnExplosionEnemy));
+                MethodInfo despawnEnemy = typeof(VENetworker).GetMethod(nameof(VENetworker.DespawnEnemy));
 
-                    for (int j = startIndexB; j < codes.Count; j++)
-                    {
+                codes.Insert(startIndex, OpCodes.Br, trueConfig);
+                codes.Insert(startIndex, OpCodes.Call, despawnEnemy);
+                codes.Insert(startIndex, OpCodes.Call, getNetObj);
+                codes.Insert(startIndex, OpCodes.Ldarg_0);
+                codes.Insert(startIndex, OpCodes.Call, spawnExplosion);
+                codes.Insert(startIndex, OpCodes.Call, getNetObj);
+                codes.Insert(startIndex, OpCodes.Ldarg_0);
+                codes.Insert(startIndex, OpCodes.Brfalse, falseConfig);
+                codes.Insert(startIndex, OpCodes.Call, getConfig);
 
-                        if (codes[j].opcode.Equals(OpCodes.Callvirt))
-                        {
-                            endIndexB = j;
-                            Plugin.mls.LogDebug($"{name}#2 endIndex: {endIndexB}");
-                            break;
-                        }
-                    }
-                    break;
-                }
-            }
-            if (startIndexA != -1 && endIndexA != -1)
-            {
-                for (int i = startIndexA - 1; i <= endIndexA; i++)
-                {
-                    codes[i].opcode = OpCodes.Nop;
-                }
-            }
-
-            if (endIndexB != -1 && endIndexB != -1)
-            {
-                for (int i = startIndexB - 1; i <= endIndexB; i++)
-                {
-                    codes[i].opcode = OpCodes.Nop;
-                }
-            }
-
-            
-            
-
-            MethodInfo getNetObj = typeof(Unity.Netcode.NetworkBehaviour).GetProperty(nameof(Unity.Netcode.NetworkBehaviour.NetworkObject)).GetMethod;
-            MethodInfo spawnExplosion = typeof(VENetworker).GetMethod(nameof(VENetworker.SpawnExplosionEnemy));
-            MethodInfo despawnEnemy = typeof(VENetworker).GetMethod(nameof(VENetworker.DespawnEnemy));
-
-            int insert = -1;
-
-            // run through entire thing till nop
-            // insert explode/kill
-            for (int i = 0; i < codes.Count; i++)
-            {
-                if (codes[i].opcode.Equals(OpCodes.Nop))
-                {
-                    insert = i;
-                    codes.Insert(insert, new CodeInstruction(OpCodes.Ldarg_0));
-                    insert++;
-                    codes.Insert(insert, new CodeInstruction(OpCodes.Call, getNetObj));
-                    insert++;
-                    codes.Insert(insert, new CodeInstruction(OpCodes.Call, spawnExplosion));
-                    insert++;
-                    codes.Insert(insert, new CodeInstruction(OpCodes.Ldarg_0));
-                    insert++;
-                    codes.Insert(insert, new CodeInstruction(OpCodes.Call, getNetObj));
-                    insert++;
-                    codes.Insert(insert, new CodeInstruction(OpCodes.Call, despawnEnemy));
-                    insert++;
-                    break;
-                }
-            }
-
-            // continue, run through until !nop
-            for (int i = insert; i < codes.Count; i++)
-            {
-                if (!codes[i].opcode.Equals(OpCodes.Nop))
-                {
-                    break;
-                }
-            }
-
-            // run through until nop
-            // insert explode/kill
-            for (int i = insert; i < codes.Count; i++)
-            {
-                if (codes[i].opcode.Equals(OpCodes.Nop))
-                {
-                    insert = i;
-                    codes.Insert(insert, new CodeInstruction(OpCodes.Ldarg_0));
-                    insert++;
-                    codes.Insert(insert, new CodeInstruction(OpCodes.Call, getNetObj));
-                    insert++;
-                    codes.Insert(insert, new CodeInstruction(OpCodes.Call, spawnExplosion));
-                    insert++;
-                    codes.Insert(insert, new CodeInstruction(OpCodes.Ldarg_0));
-                    insert++;
-                    codes.Insert(insert, new CodeInstruction(OpCodes.Call, getNetObj));
-                    insert++;
-                    codes.Insert(insert, new CodeInstruction(OpCodes.Call, despawnEnemy));
-                    insert++;
-                    break;
-                }
+                Plugin.mls.LogDebug($"Successfully patched {name}!");
             }
             return codes.AsEnumerable();
         }

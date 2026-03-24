@@ -29,19 +29,10 @@ namespace volatileEmployees
             _harmony.PatchAll(typeof(NetworkPatch));
             mls.LogInfo("Network patch successful!");
 
-            _harmony.PatchAll(typeof(PlayerControllerBPatch));      // + SpawnExplosionPlayer
-
-            if (Plugin.Config.playerImmunity.Value)
-            {
-                _harmony.PatchAll(typeof(DamagePlayerPatch));
-                _harmony.PatchAll(typeof(KillPlayerPatch));
-                mls.LogInfo("Player patches successful!");
-            }
-            else
-            {
-                mls.LogInfo("Player is not immune to explosions. Good luck!");
-            }
-
+            _harmony.PatchAll(typeof(PlayerControllerBPatch));  // + SpawnExplosionPlayer
+            _harmony.PatchAll(typeof(DamagePlayerPatch));
+            _harmony.PatchAll(typeof(KillPlayerPatch));
+            mls.LogInfo("Player patches successful!");
             _harmony.PatchAll(typeof(BaboonBirdAIPatch));
             _harmony.PatchAll(typeof(BlobAIPatch));
             _harmony.PatchAll(typeof(BushWolfEnemyPatch));
@@ -51,10 +42,6 @@ namespace volatileEmployees
             _harmony.PatchAll(typeof(CentipedeAIPatch));
             _harmony.PatchAll(typeof(ClaySurgeonAIPatch));
             _harmony.PatchAll(typeof(CrawlerAIPatch));
-            if (Plugin.Config.patchGiantKiwi.Value)
-            {
-                _harmony.PatchAll(typeof(GiantKiwiAIPatch));
-            }
             _harmony.PatchAll(typeof(HoarderBugAIPatch));
             _harmony.PatchAll(typeof(JesterAIPatch));
             _harmony.PatchAll(typeof(MouthDogAIPatch));
@@ -65,8 +52,21 @@ namespace volatileEmployees
             _harmony.PatchAll(typeof(RedLocustBeesPatch));
             _harmony.PatchAll(typeof(SandSpiderAIPatch));
             _harmony.PatchAll(typeof(SpringManAIPatch));
-
+            _harmony.PatchAll(typeof(GiantKiwiAIPatch));
             mls.LogInfo("Enemy patches successful!");
+        }
+
+        public static bool GetPlayerImmunity()
+        {
+            return Config.playerImmunity.Value;
+        }
+        public static bool GetEnemiesExplode()
+        {
+            return Config.enemiesExplode.Value;
+        }
+        public static bool GetPatchGiantKiwi()
+        {
+            return Config.patchGiantKiwi.Value;
         }
 
         // source: https://github.com/EvaisaDev/UnityNetcodePatcher

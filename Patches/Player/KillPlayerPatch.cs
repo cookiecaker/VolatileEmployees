@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection.Emit;
 using GameNetcodeStuff;
+using System.Reflection;
 
 namespace volatileEmployees.Patches.Player
 {
@@ -38,7 +39,10 @@ namespace volatileEmployees.Patches.Player
                     break;
                 }
             }
+            MethodInfo getConfig = typeof(Plugin).GetMethod(nameof(Plugin.GetPlayerImmunity));
 
+            newCodes.Add(OpCodes.Call, getConfig);              // load config for playerImmunity
+            newCodes.Add(OpCodes.Brfalse, noBlast);             // if config is false (no immunity), transfer to noBlast
             newCodes.Add(OpCodes.Ldarg_S, 3);                   // load given causeOfDeath
             newCodes.Add(OpCodes.Ldc_I4_3);                     // load "blast" causeOfDeath
             newCodes.Add(OpCodes.Ceq);                          // compare - if equal, return 1
