@@ -4,8 +4,6 @@ using HarmonyLib;
 using System.Reflection;
 using UnityEngine;
 using volatileEmployees.Patches;
-using volatileEmployees.Patches.Player;
-using volatileEmployees.Patches.Enemies;
 using BepInEx.Configuration;
 
 namespace volatileEmployees
@@ -15,7 +13,7 @@ namespace volatileEmployees
     {
         public const string modGUID = "cookiecaker.volatileEmployees";
         public const string modName = "Volatile_Employees";
-        public const string modVersion = "0.1.0";
+        public const string modVersion = "1.0.0";
 
         private static Harmony _harmony = new Harmony(modGUID);
         internal static ManualLogSource mls = BepInEx.Logging.Logger.CreateLogSource(modGUID);
@@ -28,31 +26,9 @@ namespace volatileEmployees
             NetcodePatcher();
             _harmony.PatchAll(typeof(NetworkPatch));
             mls.LogInfo("Network patch successful!");
-
-            _harmony.PatchAll(typeof(PlayerControllerBPatch));  // + SpawnExplosionPlayer
-            _harmony.PatchAll(typeof(DamagePlayerPatch));
-            _harmony.PatchAll(typeof(KillPlayerPatch));
+            _harmony.PatchAll(typeof(PlayerPatches));
             mls.LogInfo("Player patches successful!");
-            _harmony.PatchAll(typeof(BaboonBirdAIPatch));
-            _harmony.PatchAll(typeof(BlobAIPatch));
-            _harmony.PatchAll(typeof(BushWolfEnemyPatch));
-            _harmony.PatchAll(typeof(ButlerBeesEnemyAIPatch));
-            _harmony.PatchAll(typeof(ButlerEnemyAIPatch));
-            _harmony.PatchAll(typeof(CaveDwellerAIPatch));
-            _harmony.PatchAll(typeof(CentipedeAIPatch));
-            _harmony.PatchAll(typeof(ClaySurgeonAIPatch));
-            _harmony.PatchAll(typeof(CrawlerAIPatch));
-            _harmony.PatchAll(typeof(HoarderBugAIPatch));
-            _harmony.PatchAll(typeof(JesterAIPatch));
-            _harmony.PatchAll(typeof(MouthDogAIPatch));
-            _harmony.PatchAll(typeof(NutcrackerEnemyAIPatch));
-            _harmony.PatchAll(typeof(PufferAIPatch));
-            _harmony.PatchAll(typeof(RadMechAIPatchA));         // stomp
-            _harmony.PatchAll(typeof(RadMechAIPatchB));         // torch
-            _harmony.PatchAll(typeof(RedLocustBeesPatch));
-            _harmony.PatchAll(typeof(SandSpiderAIPatch));
-            _harmony.PatchAll(typeof(SpringManAIPatch));
-            _harmony.PatchAll(typeof(GiantKiwiAIPatch));
+            _harmony.PatchAll(typeof(EnemyPatches));
             mls.LogInfo("Enemy patches successful!");
         }
 

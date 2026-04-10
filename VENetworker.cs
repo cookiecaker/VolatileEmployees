@@ -91,51 +91,22 @@ namespace volatileEmployees
         }
 
 
-        [Rpc(SendTo.Everyone)]
-        public void SpawnExplosionPlayerRpc(NetworkObjectReference player)
-        {
-            if (player.TryGet(out NetworkObject netObj)) 
-            {
-                Plugin.mls.LogDebug($"Player: {netObj}");
-                Landmine.SpawnExplosion(netObj.GetComponent<PlayerControllerB>().transform.position, spawnExplosionEffect: true, killRange: 5.7f, damageRange: 6f, physicsForce: 2f);
-                return;
-            }
-        }
 
-        public static void SpawnExplosionEnemy(NetworkObject enemy)
+        public static void SpawnExplosionEntity(NetworkObject entity)
         {
-            VENetworker.Instance.SpawnExplosionEnemyRpc(enemy);
+            VENetworker.Instance.SpawnExplosionEntityRpc(entity);
         }
 
         [Rpc(SendTo.Everyone)]
-        public void SpawnExplosionEnemyRpc(NetworkObjectReference enemy)
+        public void SpawnExplosionEntityRpc(NetworkObjectReference entity)
         {
-            if (enemy.TryGet(out NetworkObject netObj))
+            if (entity.TryGet(out NetworkObject netObj))
             {
-                Plugin.mls.LogDebug($"Enemy: {netObj}");
-                Landmine.SpawnExplosion(netObj.GetComponent<EnemyAI>().transform.position, spawnExplosionEffect: true, killRange: 5.7f, damageRange: 6f, physicsForce: 2f);
-                return;
-            }
-            Plugin.mls.LogDebug($"No netObj found!");
-        }
+                Plugin.mls.LogDebug($"netObj: {netObj}");
 
-        public static void SpawnExplosion5x(NetworkObject enemy)
-        {
-            VENetworker.Instance.SpawnExplosion5xRpc(enemy);
-        }
-
-        [Rpc(SendTo.Everyone)]
-        public void SpawnExplosion5xRpc(NetworkObjectReference enemy)
-        {
-            if (enemy.TryGet(out NetworkObject netObj))
-            {
-                Plugin.mls.LogDebug($"Enemy: {netObj}");
-                Vector3 pos = netObj.GetComponent<EnemyAI>().transform.position;
-                Landmine.SpawnExplosion(pos, spawnExplosionEffect: true, killRange: 5.7f, damageRange: 6f, physicsForce: 2f);
-                Landmine.SpawnExplosion(pos, spawnExplosionEffect: true, killRange: 5.7f, damageRange: 6f, physicsForce: 2f);
-                Landmine.SpawnExplosion(pos, spawnExplosionEffect: true, killRange: 5.7f, damageRange: 6f, physicsForce: 2f);
-                Landmine.SpawnExplosion(pos, spawnExplosionEffect: true, killRange: 5.7f, damageRange: 6f, physicsForce: 2f);
-                Landmine.SpawnExplosion(pos, spawnExplosionEffect: true, killRange: 5.7f, damageRange: 6f, physicsForce: 2f);
+                EnemyAI enemy = netObj.GetComponent<EnemyAI>();
+                PlayerControllerB player = netObj.GetComponent<PlayerControllerB>();
+                Landmine.SpawnExplosion((enemy != null ? enemy.transform.position : player.transform.position), spawnExplosionEffect: true, killRange: 5.7f, damageRange: 6f, physicsForce: 2f);
                 return;
             }
             Plugin.mls.LogDebug($"No netObj found!");

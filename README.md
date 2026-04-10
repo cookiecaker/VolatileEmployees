@@ -9,8 +9,8 @@ This is a mod that causes many entities to explode on impact with the player, an
 ## Config
 
 * `playerImmunity` - set true by default. This will make players immune to the explosions they cause (as well as all other exploding things - landmines, missiles, etc...). Turning this off will make for a much harder experience!
-* `Explosion Immunity` - set true by default. This will make players immune to the explosions they cause (as well as all other exploding things - landmines, missiles, etc...). Turning this off will make for a much harder experience!
-* `Sapsucker explodes` - set false by default. Prevents a bug where stamina drains instantly after the Giant Sapsucker explodes... But also prevents the Giant Sapsucker from exploding. Your call which is worse. (If you turn this on, rejoining the lobby will fix the bug)
+* `enemiesExplode` - set true by default. Turning this off will make enemies stop exploding, so the only abnormal source of explosions will be from the player dying.
+* `patchGiantKiwi` - set false by default. Prevents a bug where players are slowed to less than a crawl after the Giant Sapsucker explodes... But also prevents the Giant Sapsucker from exploding. Your call which is worse. (If you turn this on, rejoining the lobby will fix the bug)
 
 Config settings are synced with the host!
 
@@ -21,7 +21,7 @@ Spoilers ahead!
 <details><summary>Things that explode</summary>
 These creatures won't get the chance to damage you before exploding. Your defense equipment is working perfectly!
 <br><br>
-Barbers, Bunker Spiders, Butlers, Coil-Heads, Hoarding Bugs, Hygroderes, Jesters, Maneaters, Mask Hornets, Nutcrackers, Snare Fleas, Spore Lizards, Thumpers, Baboon Hawks, Eyeless Dogs, Old Birds, Circuit Bees, Giant Sapsuckers, and Kidnapper Foxes (allegedly)
+Baboon Hawks, Barbers, Bunker Spiders, Butlers, Circuit Bees, Coil-Heads, Eyeless Dogs, Feiopars, Giant Sapsuckers, Hoarding Bugs, Hygroderes, Jesters, Kidnapper Foxes, Maneaters, Mask Hornets, Nutcrackers, Old Birds, Snare Fleas, Spore Lizards, and Thumpers
 <br><br>
 </details>
 
@@ -29,6 +29,10 @@ Barbers, Bunker Spiders, Butlers, Coil-Heads, Hoarding Bugs, Hygroderes, Jesters
 Earth Leviathans - Some creatures are simply too massive for any reasonably priced amount of equipment to be effective against. If you absolutely need to take down one of these beasts, we suggest bringing large amounts of dynamite! (Note: The Company does not sell nor endorse the selling of dynamite to employees.)
 <br><br>
 Nutcrackers - Their firearms are unable to set off our defensive equipment. Try approaching them directly to trigger it!
+<br><br>
+Gunkfish - This creature isn't dangerous, and could cause more problems to employees if your equipment were to activate against it. Keep these cleaners safe, and they won't bother you!
+<br><br>
+Blooming - The Company does not guarantee equipment effectiveness if a Cadaver Growth infection results in enough internal plant matter to incapacitate an employee. However, until it is fully grown, dying to other sources will fry the plants inside and ensure your crew doesn't deal with what remains.
 <br><br>
 Ghost Girl - The Company has found no reason to believe the supernatural exists and thus has provided no such measures to counteract them. Even if we knew how to do that. Which we do not.
 <br><br>
@@ -42,8 +46,10 @@ Brackens, Masked, Forest Keepers, and Tulip Snakes
 
 ## Credits
 * cookiecaker (me) - Programming, thumbnail, video editing
-* [ButteryStancakes](https://thunderstore.io/c/lethal-company/p/ButteryStancakes/) - `Init()`, `Create()`, and `OnNetworkSpawn()` for the networker and helping me understand networking as a whole
+* zeeblo lite - [Modding tutorial](https://www.youtube.com/watch?v=1c4Ut7nINkI) used
+* [EvaisaDev](https://thunderstore.io/c/lethal-company/p/Evaisa/) - UnityNetcodePatcher for syncing explosions
+* [ButteryStancakes](https://thunderstore.io/c/lethal-company/p/ButteryStancakes/) - `Init()`, `Create()`, and `OnNetworkSpawn()` for the networker and helping me understand networking as a whole; idea and advice for blooming implementation
 * [IAmBatby](https://thunderstore.io/c/lethal-company/p/IAmBatby/) - `Add()` for ILExtensions and help with fixing bugs
-* [pacoito](https://thunderstore.io/c/lethal-company/p/pacoito/), [Hamunii](https://thunderstore.io/c/lethal-company/p/Hamunii/), [mborsh](https://thunderstore.io/c/lethal-company/p/mborsh/), [XuXiaolan](https://thunderstore.io/c/lethal-company/p/XuXiaolan/) - Lots of help with fixing bugs, helping me understand IL code and being very patient with me
+* [pacoito](https://thunderstore.io/c/lethal-company/p/pacoito/), [Hamunii](https://thunderstore.io/c/lethal-company/p/Hamunii/), [mborsh](https://thunderstore.io/c/lethal-company/p/mborsh/), [XuXiaolan](https://thunderstore.io/c/lethal-company/p/XuXiaolan/) - Lots of help with fixing bugs and using IL code; being very patient with me
 * flintchips - Making the song "Xarnip" in the intro video
-* Neve, Ame, Thia, Limbo, Tood, and Unna - Testing and filming
+* [debbicar](https://thunderstore.io/c/lethal-company/p/debit_card_debit/), Neve, Ame, Thia, Limbo, Tood, and Unna - Testing and filming
